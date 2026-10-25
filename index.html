@@ -551,7 +551,7 @@ render=function(){if(page==='agora'){const tabs=[['inicio','✦','Início'],['fo
 const _homeAntesAgora=home;
 home=function(){return `<section class="card" style="border-color:var(--gold)"><div class="eyebrow">COMECE POR AQUI</div><h3>Não sei por onde começar</h3><p>O ALÉM escolhe opções práticas com base na sua energia, nas tarefas pendentes e no concurso. Sem preencher mais formulários.</p>${btn('Quero fazer algo agora',"goto('agora')")}</section>`+_homeAntesAgora()};
 
-render();
+window.addEventListener("DOMContentLoaded",()=>{try{render()}catch(error){console.error(error);document.getElementById("app").innerHTML="<section class=\"card\"><h2>Não foi possível carregar esta página</h2><p>Atualize a página. Seus registros não foram apagados.</p></section>"}});
 </script><style>
 #alem-concurso-launch{display:none;position:fixed;right:15px;bottom:83px;z-index:900;background:#bd9455;color:#092016;border:1px solid #e2bd7b;border-radius:28px;padding:11px 16px;font:700 13px system-ui;box-shadow:0 6px 20px #0007;cursor:pointer}
 #alem-concurso-overlay{display:none;position:fixed;inset:0;z-index:1100;background:#03110bea;overflow:auto;padding:18px 14px 90px;color:#f3eee1;font-family:system-ui}
