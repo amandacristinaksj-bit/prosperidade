@@ -524,5 +524,32 @@ function authorPage(i){let a=AH[i],d=ahState(i),t=a.themes[d.theme],h=d.history,
 const alemRenderAntesAutores=render;
 render=function(){if(/^autor[012]$/.test(page)){const tabs=[['inicio','✦','Início'],['foco','◎','Foco'],['concursos','◈','Estudos'],['dia','☀','Meu Dia'],['calendario','▦','Histórico'],['mais','☷','Mais']];$('tabs').innerHTML=tabs.map(([id,ico,label])=>`<button class="${page===id?'active':''}" onclick="goto('${id}')">${ico}<br>${label}</button>`).join('');$('app').innerHTML=authorPage(+page.slice(-1));if(timer)paintTimer();return}if(page==='autores'){const tabs=[['inicio','✦','Início'],['foco','◎','Foco'],['concursos','◈','Estudos'],['dia','☀','Meu Dia'],['calendario','▦','Histórico'],['mais','☷','Mais']];$('tabs').innerHTML=tabs.map(([id,ico,label])=>`<button onclick="goto('${id}')">${ico}<br>${label}</button>`).join('');$('app').innerHTML=authorHubPage();return}alemRenderAntesAutores()};
 
+
+/* ALÉM: modo de ação guiada — independente dos formulários extensos. */
+let agoraDraft={choice:'',started:0};
+function agoraSuggestions(){
+ const low=(S.profile.energy||2)<=2;
+ const contest=S.contests.find(c=>!c.archived&&daysUntil(c.date)>=0);
+ const undone=S.tasks.filter(t=>t.date===today()&&!t.done);
+ const suggestions=[];
+ if(undone.length)suggestions.push({title:'Continuar algo que já planejei',action:undone[0].text,minutes:low?3:10,area:'Meu Dia'});
+ if(contest)suggestions.push({title:'Avançar no concurso',action:low?'Abrir o Gran Cursos e responder uma questão de uma matéria do edital':'Resolver cinco questões e anotar o motivo dos erros',minutes:low?5:20,area:'Estudos'});
+ suggestions.push({title:'Destravar sem me cobrar',action:low?'Separar o material e fazer apenas dois minutos':'Escolher uma tarefa e trabalhar por dez minutos',minutes:low?2:10,area:'Foco'});
+ suggestions.push({title:'Cuidar de mim',action:low?'Beber água e fazer uma pausa confortável':'Fazer uma pequena atividade de autocuidado',minutes:low?2:8,area:'Autocuidado'});
+ return suggestions;
+}
+function agoraPage(){const suggestions=agoraSuggestions(),active=agoraDraft.choice!==''?suggestions[+agoraDraft.choice]:null;
+ return `<h2>Fazer alguma coisa agora</h2><p class="muted">Sem diagnóstico longo. Escolha um caminho, execute um passo pequeno e diga como foi. O ALÉM registrará a tentativa.</p>
+ <section class="card"><div class="eyebrow">01 · Uma escolha simples</div><h3>O que seria mais útil neste momento?</h3><div class="grid two">${suggestions.map((v,i)=>`<button class="tile" style="text-align:left;border-color:${agoraDraft.choice===String(i)?'var(--gold)':'var(--line)'}" onclick="agoraDraft.choice='${i}';render()"><strong>${esc(v.title)}</strong><span>${esc(v.minutes+' min · '+v.area)}</span></button>`).join('')}</div></section>
+ ${active?`<section class="card"><div class="eyebrow">02 · Seu próximo passo</div><h3>${esc(active.action)}</h3><p>Tempo sugerido: <strong>${active.minutes} minutos</strong>. Você pode parar antes; o objetivo é experimentar, não se punir.</p><div class="flex">${btn(agoraDraft.started?'Reiniciar contagem':'Começar agora','agoraStart()')} ${btn('Mudar escolha',"agoraDraft.choice='';agoraDraft.started=0;render()",true)}</div><p id="agoraClock" aria-live="polite">${agoraDraft.started?'Contagem iniciada. Faça o primeiro passo.':'Quando estiver pronta, toque em Começar agora.'}</p><h3>Como foi?</h3><div class="flex">${btn('Consegui',"agoraFinish('Consegui')")}${btn('Fiz uma parte',"agoraFinish('Parcialmente')",true)}${btn('Não consegui',"agoraFinish('Não consegui')",true)}</div></section>`:''}
+ <section class="card"><h3>Minhas últimas tentativas</h3>${S.entries.filter(e=>e.area==='Ação guiada').slice(0,8).map(e=>`<div class="step"><strong>${esc(e.title)}</strong><p class="small muted">${esc(e.date)} · ${esc(e.details)}</p></div>`).join('')||'<p class="muted">Ainda não há tentativas. Nenhum problema: comece por um único passo.</p>'}</section>`;
+}
+function agoraStart(){agoraDraft.started=Date.now();const el=$('agoraClock');if(el)el.textContent='Começou! Faça apenas o primeiro passo. Depois registre como foi.'}
+function agoraFinish(status){let a=agoraSuggestions()[+agoraDraft.choice];if(!a)return;log('Ação guiada',a.title,`${status} · ${a.action} · ${agoraDraft.started?Math.max(0,Math.round((Date.now()-agoraDraft.started)/60000))+' min desde o início':'sem cronômetro'}`);if(status==='Consegui'){let t=S.tasks.find(t=>t.date===today()&&!t.done&&t.text===a.action);if(t)t.done=true;}save();agoraDraft.choice='';agoraDraft.started=0;render()}
+const _renderAntesAgora=render;
+render=function(){if(page==='agora'){const tabs=[['inicio','✦','Início'],['foco','◎','Foco'],['concursos','◈','Estudos'],['dia','☀','Meu Dia'],['calendario','▦','Histórico'],['mais','☷','Mais']];$('tabs').innerHTML=tabs.map(([id,ico,label])=>`<button class="${page===id?'active':''}" onclick="goto('${id}')">${ico}<br>${label}</button>`).join('');$('app').innerHTML=agoraPage();return}_renderAntesAgora()};
+const _homeAntesAgora=home;
+home=function(){return `<section class="card" style="border-color:var(--gold)"><div class="eyebrow">COMECE POR AQUI</div><h3>Não sei por onde começar</h3><p>O ALÉM escolhe opções práticas com base na sua energia, nas tarefas pendentes e no concurso. Sem preencher mais formulários.</p>${btn('Quero fazer algo agora',"goto('agora')")}</section>`+_homeAntesAgora()};
+
 render();
 </script></body></html>
